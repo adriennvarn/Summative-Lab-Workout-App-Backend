@@ -9,9 +9,15 @@ class Exercise(db.Model):
     __tablename__ = "exercises"
 
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String)
-    category = db.Column(db.String)
+    name = db.Column(db.String, nullable=False)
+    category = db.Column(db.String, nullable=False)
     equipment_needed = db.Column(db.Boolean, default=False)
+
+    #  Enforce required fields at SQLAlchemy level, to avoid empty constructors
+    def __init__(self, **kwargs):
+        if not {"name", "category"}.issubset(kwargs):
+            raise ValueError("Both 'name' and 'category' are required.")
+        super().__init__(**kwargs)
 
     #  Relationships
     workout_exercises = db.relationship("WorkoutExercise", back_populates="exercise")
@@ -20,7 +26,7 @@ class Exercise(db.Model):
         "workout",
         creator=lambda workout_obj: WorkoutExercise(workout=workout_obj),
     )
-    
+
     #  Validators
     @validates("name")
     def validate_name(self, key, name):
@@ -29,7 +35,7 @@ class Exercise(db.Model):
         if len(name) not in range(6, 26):
             raise ValueError("Name must be between 6 and 25 characters.")
         return name
-    
+
     @validates("category")
     def validate_category(self, key, category):
         if not category:
@@ -44,8 +50,14 @@ class Workout(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     date = db.Column(db.DateTime, server_default=db.func.now())
-    duration_minutes = db.Column(db.Integer)
+    duration_minutes = db.Column(db.Integer, nullable=False)
     notes = db.Column(db.Text)
+
+    #  Enforce required fields at SQLAlchemy level, to avoid empty constructors
+    def __init__(self, **kwargs):
+        if not {"duration_minutes"}.issubset(kwargs):
+            raise ValueError("Duration in minutes is required.")
+        super().__init__(**kwargs)
 
     #  Relationships
     workout_exercises = db.relationship(
@@ -56,7 +68,7 @@ class Workout(db.Model):
         "exercise",
         creator=lambda exercise_obj: WorkoutExercise(exercise=exercise_obj),
     )
-    
+
     #  Validators
     @validates("duration_minutes")
     def validate_duration(self, key, duration):
@@ -73,9 +85,15 @@ class WorkoutExercise(db.Model):
     __tablename__ = "workout_exercises"
 
     id = db.Column(db.Integer, primary_key=True)
-    reps = db.Column(db.Integer)
-    sets = db.Column(db.Integer)
-    duration_seconds = db.Column(db.Integer)
+    reps = db.Column(db.Integer, nullable=False)
+    sets = db.Column(db.Integer, nullable=False)
+    duration_seconds = db.Column(db.Integer, nullable=False)
+
+    #  Enforce required fields at SQLAlchemy level, to avoid empty constructors
+    def __init__(self, **kwargs):
+        if not {"reps", "sets", "duration_seconds"}.issubset(kwargs):
+            raise ValueError("'reps', 'sets', and 'duration_seconds' are all required.")
+        super().__init__(**kwargs)
 
     #  Foreign keys
     workout_id = db.Column(db.Integer, db.ForeignKey("workouts.id"))
@@ -95,7 +113,7 @@ class WorkoutExercise(db.Model):
         if not reps > 0:
             raise ValueError("Number of reps must be greater than 0.")
         return reps
-    
+
     @validates("sets")
     def validate_reps(self, key, sets):
         if not sets:
