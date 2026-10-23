@@ -2,7 +2,7 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import validates
 from sqlalchemy.ext.associationproxy import association_proxy
 
-from marshmallow import Schema, fields, validate, pre_load
+from marshmallow import Schema, fields, validate, pre_load, post_load
 
 db = SQLAlchemy()
 
@@ -56,18 +56,18 @@ class ExerciseSchema(Schema):
     category = fields.Str(required=True)
     equipment_needed = fields.Bool()
 
-    workout_exercises = fields.List(
-        fields.Nested(lambda: WorkoutExerciseSchema(exclude=("exercise",)))
-    )
-    workouts = fields.List(fields.Nested(lambda: WorkoutSchema(exclude=("exercises",))))
-    
+    workout_exercises = fields.List(fields.Nested("WorkoutExerciseSchema"))
+    workouts = fields.List(fields.Nested("WorkoutSchema", exclude=("exercises",)))
+
     @pre_load  # Not required in production, but makes debugging much easier
     def remove_id_on_load(self, data, **kwargs):
         if isinstance(data, dict):
             data.pop("id", None)
         return data
     
-
+    @post_load
+    def make_exercise(self, data, **kwargs):
+        return Exercise(**data)
 
 ######
 # Workout
@@ -114,19 +114,20 @@ class WorkoutSchema(Schema):
     duration_minutes = fields.Int(required=True, validate=validate.Range(min=1))
     notes = fields.Str()
 
-    workout_exercises = fields.List(
-        fields.Nested(lambda: WorkoutExerciseSchema(exclude=("workout",)))
-    )
+    workout_exercises = fields.List(fields.Nested("WorkoutExerciseSchema"))
     exercises = fields.List(
-        fields.Nested(lambda: ExerciseSchema(exclude=("workouts",)))
+        fields.Nested("ExerciseSchema", exclude=("workouts", "workout_exercises"))
     )
-    
+
     @pre_load
     def remove_id_on_load(self, data, **kwargs):
         if isinstance(data, dict):
             data.pop("id", None)
         return data
 
+    @post_load
+    def make_workout(self, data, **kwargs):
+        return Workout(**data)
 
 ######
 # WorkoutExercise
@@ -190,12 +191,16 @@ class WorkoutExerciseSchema(Schema):
     reps = fields.Int(required=True, validate=validate.Range(min=1))
     sets = fields.Int(required=True, validate=validate.Range(min=1))
     duration_seconds = fields.Int(required=True, validate=validate.Range(min=1))
-
-    workout = fields.Nested(lambda: WorkoutSchema(exclude=("workout_exercises",)))
-    exercise = fields.Nested(lambda: ExerciseSchema(exclude=("workout_exercises",)))
+    
+    workout = fields.Nested("WorkoutSchema", exclude=("workout_exercises", "exercises"))
+    exercise = fields.Nested("ExerciseSchema", exclude=("workout_exercises", "workouts"))
 
     @pre_load
     def remove_id_on_load(self, data, **kwargs):
         if isinstance(data, dict):
             data.pop("id", None)
         return data
+
+    @post_load
+    def make_workout_exercise(self, data, **kwargs):
+        return WorkoutExercise(**data)
