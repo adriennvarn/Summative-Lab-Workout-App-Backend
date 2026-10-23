@@ -18,7 +18,7 @@ This backend app demonstrates knowledge of Flask API creation, SQLAlchemy master
 - From a terminal in the repo folder, run `pipenv install` and `pipenv shell`
 - `cd` to the server folder, and run `flask db upgrade` to generate a database file. Then run `python3 seed.py` to fill it with seed data.
 - To test database directly: run `flask shell` to enter commands as if operating from within the Flask app.
-- To test full API: run `flask run` and use your preferred API testing tool to send GET, POST, and DELETE commands.
+- To test full API: run `flask run` and use your preferred API testing tool to send GET, POST, and DELETE commands. Routes and data formats below.
 
 ## Routes
 **GET**
