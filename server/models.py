@@ -2,9 +2,14 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import validates
 from sqlalchemy.ext.associationproxy import association_proxy
 
+from marshmallow import Schema, fields, validate, pre_load
+
 db = SQLAlchemy()
 
 
+######
+# Exercise
+######
 class Exercise(db.Model):
     __tablename__ = "exercises"
 
@@ -45,6 +50,28 @@ class Exercise(db.Model):
         return category
 
 
+class ExerciseSchema(Schema):
+    id = fields.Int(dump_only=True)
+    name = fields.Str(required=True, validate=validate.Length(min=6, max=25))
+    category = fields.Str(required=True)
+    equipment_needed = fields.Bool()
+
+    workout_exercises = fields.List(
+        fields.Nested(lambda: WorkoutExerciseSchema(exclude=("exercise",)))
+    )
+    workouts = fields.List(fields.Nested(lambda: WorkoutSchema(exclude=("exercises",))))
+    
+    @pre_load  # Not required in production, but makes debugging much easier
+    def remove_id_on_load(self, data, **kwargs):
+        if isinstance(data, dict):
+            data.pop("id", None)
+        return data
+    
+
+
+######
+# Workout
+######
 class Workout(db.Model):
     __tablename__ = "workouts"
 
@@ -81,6 +108,29 @@ class Workout(db.Model):
         return duration
 
 
+class WorkoutSchema(Schema):
+    id = fields.Int(dump_only=True)
+    date = fields.DateTime()
+    duration_minutes = fields.Int(required=True, validate=validate.Range(min=1))
+    notes = fields.Str()
+
+    workout_exercises = fields.List(
+        fields.Nested(lambda: WorkoutExerciseSchema(exclude=("workout",)))
+    )
+    exercises = fields.List(
+        fields.Nested(lambda: ExerciseSchema(exclude=("workouts",)))
+    )
+    
+    @pre_load
+    def remove_id_on_load(self, data, **kwargs):
+        if isinstance(data, dict):
+            data.pop("id", None)
+        return data
+
+
+######
+# WorkoutExercise
+######
 class WorkoutExercise(db.Model):
     __tablename__ = "workout_exercises"
 
@@ -133,3 +183,19 @@ class WorkoutExercise(db.Model):
         if not duration > 0:
             raise ValueError("Duration must be greater than 0 seconds.")
         return duration
+
+
+class WorkoutExerciseSchema(Schema):
+    id = fields.Int(dump_only=True)
+    reps = fields.Int(required=True, validate=validate.Range(min=1))
+    sets = fields.Int(required=True, validate=validate.Range(min=1))
+    duration_seconds = fields.Int(required=True, validate=validate.Range(min=1))
+
+    workout = fields.Nested(lambda: WorkoutSchema(exclude=("workout_exercises",)))
+    exercise = fields.Nested(lambda: ExerciseSchema(exclude=("workout_exercises",)))
+
+    @pre_load
+    def remove_id_on_load(self, data, **kwargs):
+        if isinstance(data, dict):
+            data.pop("id", None)
+        return data
