@@ -32,7 +32,15 @@ def get_all_workouts():
 
 @app.get("/workouts/<int:id>")
 def get_workout_by_id(id):
-    pass
+    workout = Workout.query.filter_by(id=id).first()
+    if workout:
+        body = WorkoutSchema().dump(workout)
+        status = 200
+    else:
+        body = {"error": f"No workout ID {id} found."}
+        status = 404
+    
+    return make_response(body, status)
 
 @app.post("/workouts")
 def add_workout():
@@ -45,11 +53,27 @@ def delete_workout(id):
 
 @app.get("/exercises")
 def get_all_exercises():
-    pass
+    exercises = Exercise.query.all()
+    if exercises:
+        body = ExerciseSchema(many=True).dump(exercises)
+        status = 200
+    else:
+        body = {"error": "No exercises found."}
+        status = 404
+    
+    return make_response(body, status)
 
 @app.get("/exercises/<int:id>")
 def get_exercise_by_id(id):
-    pass
+    exercise = Exercise.query.filter_by(id=id).first()
+    if exercise:
+        body = ExerciseSchema().dump(exercise)
+        status = 200
+    else:
+        body = {"error": f"No exercise ID {id} found."}
+        status = 404
+    
+    return make_response(body, status)
 
 @app.post("/exercises")
 def add_exercise():
