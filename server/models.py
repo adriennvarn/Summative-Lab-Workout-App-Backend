@@ -18,7 +18,7 @@ class Exercise(db.Model):
     workouts = association_proxy(
         "workout_exercises",
         "workout",
-        creator=lambda workout_obj: Workout(workout=workout_obj),
+        creator=lambda workout_obj: WorkoutExercise(workout=workout_obj),
     )
 
 
@@ -37,7 +37,7 @@ class Workout(db.Model):
     exercises = association_proxy(
         "workout_exercises",
         "exercise",
-        creator=lambda exercise_obj: Exercise(exercise=exercise_obj),
+        creator=lambda exercise_obj: WorkoutExercise(exercise=exercise_obj),
     )
 
 

@@ -21,6 +21,7 @@ with app.app_context():
         workouts.append(wo)
         
     db.session.add_all(workouts)
+    db.session.commit()
 
     exercise_names = ["squats", "chin ups", "dumbell lifts", "leg raises"]
     categories = ["leg day", "arm day", "core day", "full body"]
@@ -35,15 +36,16 @@ with app.app_context():
         exercises.append(ex)
     
     db.session.add_all(exercises)
+    db.session.commit()
 
     workout_exercises = []
-    for n in range(10):
+    for n in range(20):
         we = WorkoutExercise(
             reps=ri(2, 6),
             sets=ri(2, 6),
             duration_seconds=ri(30, 120),
-            workout_id=rc(workouts),
-            exercise_id=rc(exercises),
+            workout=rc(workouts),
+            exercise=rc(exercises),
         )
         workout_exercises.append(we)
     
