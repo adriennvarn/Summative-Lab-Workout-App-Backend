@@ -191,9 +191,9 @@ class WorkoutExerciseSchema(Schema):
     reps = fields.Int(required=True, validate=validate.Range(min=1))
     sets = fields.Int(required=True, validate=validate.Range(min=1))
     duration_seconds = fields.Int(required=True, validate=validate.Range(min=1))
-
-    workout_id = fields.Int(dump_only=True)
-    exercise_id = fields.Int(dump_only=True)
+    
+    workout = fields.Nested("WorkoutSchema", exclude=("workout_exercises", "exercises"))
+    exercise = fields.Nested("ExerciseSchema", exclude=("workout_exercises", "workouts"))
 
     @pre_load
     def remove_id_on_load(self, data, **kwargs):

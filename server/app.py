@@ -150,6 +150,8 @@ def add_exercise_to_workout(wo_id, ex_id):
         data = request.get_json()
         try:
             workout_exercise = WorkoutExerciseSchema().load(data)
+            workout_exercise.workout = workout
+            workout_exercise.exercise = exercise
             db.session.add(workout_exercise)
             db.session.commit()
             body = {"message": "success"}
