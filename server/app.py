@@ -138,7 +138,27 @@ def delete_exercise(id):
 
 @app.post("/workouts/<int:wo_id>/exercises/<int:ex_id>/workout_exercises")
 def add_exercise_to_workout(wo_id, ex_id):
-    pass
+    workout = Workout.query.filter_by(id=wo_id).first()
+    exercise = Exercise.query.filter_by(id=ex_id).first()
+    if not workout:
+        body = {"error": f"No workout ID {wo_id} found."}
+        status = 404
+    elif not exercise:
+        body = {"error": f"No exercise ID {ex_id} found."}
+        status = 404
+    else:
+        data = request.get_json()
+        try:
+            workout_exercise = WorkoutExerciseSchema().load(data)
+            db.session.add(workout_exercise)
+            db.session.commit()
+            body = {"message": "success"}
+            status = 201
+        except ValidationError as err:
+            body = {"validation error": f"{err}"}
+            status = 400
+    
+    return make_response(body, status)
 
 
 if __name__ == "__main__":
