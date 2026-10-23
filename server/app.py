@@ -1,6 +1,6 @@
 from flask import Flask, make_response
 from flask_migrate import Migrate
-from models import db
+from models import *
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
@@ -14,9 +14,21 @@ db.init_app(app)
 def health_check():
     return make_response({"status": "ok"}, 200)
 
+@app.route("/")
+def index():
+    return "<h1>Welcome to Workout API Lab</h1>"
+
 @app.get("/workouts")
 def get_all_workouts():
-    pass
+    workouts = Workout.query.all()
+    if workouts:
+        body = WorkoutSchema(many=True).dump(workouts)
+        status = 200
+    else:
+        body = {"error": "No workouts found."}
+        status = 404
+        
+    return make_response(body, status)
 
 @app.get("/workouts/<int:id>")
 def get_workout_by_id(id):

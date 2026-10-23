@@ -56,17 +56,14 @@ class ExerciseSchema(Schema):
     category = fields.Str(required=True)
     equipment_needed = fields.Bool()
 
-    workout_exercises = fields.List(
-        fields.Nested(lambda: WorkoutExerciseSchema(exclude=("exercise",)))
-    )
-    workouts = fields.List(fields.Nested(lambda: WorkoutSchema(exclude=("exercises",))))
-    
+    workout_exercises = fields.List(fields.Nested("WorkoutExerciseSchema"))
+    workouts = fields.List(fields.Nested("WorkoutSchema", exclude=("exercises",)))
+
     @pre_load  # Not required in production, but makes debugging much easier
     def remove_id_on_load(self, data, **kwargs):
         if isinstance(data, dict):
             data.pop("id", None)
         return data
-    
 
 
 ######
@@ -114,13 +111,11 @@ class WorkoutSchema(Schema):
     duration_minutes = fields.Int(required=True, validate=validate.Range(min=1))
     notes = fields.Str()
 
-    workout_exercises = fields.List(
-        fields.Nested(lambda: WorkoutExerciseSchema(exclude=("workout",)))
-    )
+    workout_exercises = fields.List(fields.Nested("WorkoutExerciseSchema"))
     exercises = fields.List(
-        fields.Nested(lambda: ExerciseSchema(exclude=("workouts",)))
+        fields.Nested("ExerciseSchema", exclude=("workouts", "workout_exercises"))
     )
-    
+
     @pre_load
     def remove_id_on_load(self, data, **kwargs):
         if isinstance(data, dict):
@@ -191,8 +186,8 @@ class WorkoutExerciseSchema(Schema):
     sets = fields.Int(required=True, validate=validate.Range(min=1))
     duration_seconds = fields.Int(required=True, validate=validate.Range(min=1))
 
-    workout = fields.Nested(lambda: WorkoutSchema(exclude=("workout_exercises",)))
-    exercise = fields.Nested(lambda: ExerciseSchema(exclude=("workout_exercises",)))
+    workout_id = fields.Int(dump_only=True)
+    exercise_id = fields.Int(dump_only=True)
 
     @pre_load
     def remove_id_on_load(self, data, **kwargs):
