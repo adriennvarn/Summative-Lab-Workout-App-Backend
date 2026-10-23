@@ -123,8 +123,17 @@ def add_exercise():
 
 @app.delete("/exercises/<int:id>")
 def delete_exercise(id):
-    """OPTIONAL"""
-    pass
+    exercise = Exercise.query.filter_by(id=id).first()
+    if exercise:
+        db.session.delete(exercise)
+        db.session.commit()
+        body = {}
+        status = 204
+    else:
+        body = {"error": f"No exercise ID {id} found."}
+        status = 404
+
+    return make_response(body, status)
 
 
 @app.post("/workouts/<int:wo_id>/exercises/<int:ex_id>/workout_exercises")
