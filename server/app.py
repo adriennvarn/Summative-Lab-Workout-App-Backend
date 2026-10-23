@@ -4,20 +4,23 @@ from marshmallow import ValidationError
 from models import *
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///app.db"
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 migrate = Migrate(app, db)
 
 db.init_app(app)
 
+
 @app.route("/api/health")
 def health_check():
     return make_response({"status": "ok"}, 200)
 
+
 @app.route("/")
 def index():
     return "<h1>Welcome to Workout API Lab</h1>"
+
 
 @app.get("/workouts")
 def get_all_workouts():
@@ -28,8 +31,9 @@ def get_all_workouts():
     else:
         body = {"error": "No workouts found."}
         status = 404
-        
+
     return make_response(body, status)
+
 
 @app.get("/workouts/<int:id>")
 def get_workout_by_id(id):
@@ -40,8 +44,9 @@ def get_workout_by_id(id):
     else:
         body = {"error": f"No workout ID {id} found."}
         status = 404
-    
+
     return make_response(body, status)
+
 
 @app.post("/workouts")
 def add_workout():
@@ -50,19 +55,29 @@ def add_workout():
         workout = WorkoutSchema().load(data)
         db.session.add(workout)
         db.session.commit()
-        body = {}
+        body = {"message": "success"}
         status = 201
     except ValidationError as err:
         body = {"validation error": f"{err}"}
         status = 400
-    
+
     return make_response(body, status)
-        
+
 
 @app.delete("/workouts/<int:id>")
 def delete_workout(id):
-    """OPTIONAL"""
-    pass
+    workout = Workout.query.filter_by(id=id).first()
+    if workout:
+        db.session.delete(workout)
+        db.session.commit()
+        body = {}
+        status = 204
+    else:
+        body = {"error": f"No workout ID {id} found."}
+        status = 404
+
+    return make_response(body, status)
+
 
 @app.get("/exercises")
 def get_all_exercises():
@@ -73,8 +88,9 @@ def get_all_exercises():
     else:
         body = {"error": "No exercises found."}
         status = 404
-    
+
     return make_response(body, status)
+
 
 @app.get("/exercises/<int:id>")
 def get_exercise_by_id(id):
@@ -85,21 +101,36 @@ def get_exercise_by_id(id):
     else:
         body = {"error": f"No exercise ID {id} found."}
         status = 404
-    
+
     return make_response(body, status)
+
 
 @app.post("/exercises")
 def add_exercise():
-    pass
+    data = request.get_json()
+    try:
+        exercise = ExerciseSchema().load(data)
+        db.session.add(exercise)
+        db.session.commit()
+        body = {"message": "success"}
+        status = 201
+    except ValidationError as err:
+        body = {"validation error": f"{err}"}
+        status = 400
+
+    return make_response(body, status)
+
 
 @app.delete("/exercises/<int:id>")
 def delete_exercise(id):
     """OPTIONAL"""
     pass
 
+
 @app.post("/workouts/<int:wo_id>/exercises/<int:ex_id>/workout_exercises")
 def add_exercise_to_workout(wo_id, ex_id):
     pass
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     app.run(port=5555, debug=True)
