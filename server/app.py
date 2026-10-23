@@ -1,5 +1,6 @@
-from flask import Flask, make_response
+from flask import Flask, make_response, request
 from flask_migrate import Migrate
+from marshmallow import ValidationError
 from models import *
 
 app = Flask(__name__)
@@ -44,7 +45,19 @@ def get_workout_by_id(id):
 
 @app.post("/workouts")
 def add_workout():
-    pass
+    data = request.get_json()
+    try:
+        workout = WorkoutSchema().load(data)
+        db.session.add(workout)
+        db.session.commit()
+        body = {}
+        status = 201
+    except ValidationError as err:
+        body = {"validation error": f"{err}"}
+        status = 400
+    
+    return make_response(body, status)
+        
 
 @app.delete("/workouts/<int:id>")
 def delete_workout(id):

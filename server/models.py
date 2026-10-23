@@ -2,7 +2,7 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import validates
 from sqlalchemy.ext.associationproxy import association_proxy
 
-from marshmallow import Schema, fields, validate, pre_load
+from marshmallow import Schema, fields, validate, pre_load, post_load
 
 db = SQLAlchemy()
 
@@ -64,7 +64,10 @@ class ExerciseSchema(Schema):
         if isinstance(data, dict):
             data.pop("id", None)
         return data
-
+    
+    @post_load
+    def make_exercise(self, data, **kwargs):
+        return Exercise(**data)
 
 ######
 # Workout
@@ -122,6 +125,9 @@ class WorkoutSchema(Schema):
             data.pop("id", None)
         return data
 
+    @post_load
+    def make_workout(self, data, **kwargs):
+        return Workout(**data)
 
 ######
 # WorkoutExercise
@@ -194,3 +200,7 @@ class WorkoutExerciseSchema(Schema):
         if isinstance(data, dict):
             data.pop("id", None)
         return data
+
+    @post_load
+    def make_workout_exercise(self, data, **kwargs):
+        return WorkoutExercise(**data)
